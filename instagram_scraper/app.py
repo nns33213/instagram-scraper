@@ -937,9 +937,17 @@ class InstagramScraper(object):
         if media:
             try:
                 while True:
+                    idx = 0
+
                     for item in media:
                         if not self.is_new_media(item):
-                            return
+                            # Verify if the order is chronological and there are
+                            # no pinned posts from this point forward
+                            timestamps = [self.__get_timestamp(item) for item in media[idx:]]
+
+                            if sorted(timestamps, reverse=True) == timestamps:
+                                return
+                        idx += 1
                         yield item
 
                     if end_cursor:
@@ -987,6 +995,7 @@ class InstagramScraper(object):
         for url in item['urls']:
             ext = self.__get_file_ext(url)
             if ext not in filetypes:
+                self.logger.warning('Unknown file type: {0} for {1}'.format(ext, url))
                 filetypes[ext] = 0
             filetypes[ext] += 1
 
